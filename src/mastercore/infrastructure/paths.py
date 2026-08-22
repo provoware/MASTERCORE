@@ -1,4 +1,4 @@
-"""Path normalization and authorization.
+"""Path normalization, authorization and write-capability checks.
 
 All filesystem consumers should resolve paths through this module before I/O.
 """
@@ -6,9 +6,16 @@ All filesystem consumers should resolve paths through this module before I/O.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from pathlib import Path
+import shutil
+import stat
 
-from mastercore.domain.errors import PermissionDeniedError, ValidationError
+from mastercore.domain.errors import (
+    PermissionDeniedError,
+    StorageLimitError,
+    ValidationError,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,6 +29,21 @@ class PathPolicy:
         return self.root.expanduser().resolve(strict=False)
 
 
+@dataclass(frozen=True, slots=True)
+class WriteConstraints:
+    """Operation-specific limits applied before filesystem mutation."""
+
+    max_bytes: int | None = None
+    min_free_bytes: int = 0
+    allowed_suffixes: frozenset[str] | None = None
+
+    def __post_init__(self) -> None:
+        if self.max_bytes is not None and self.max_bytes < 0:
+            raise ValueError("max_bytes must be >= 0")
+        if self.min_free_bytes < 0:
+            raise ValueError("min_free_bytes must be >= 0")
+
+
 def resolve_authorized_path(
     candidate: str | Path,
     policy: PathPolicy,
@@ -29,12 +51,7 @@ def resolve_authorized_path(
     must_exist: bool | None = None,
     expect_file: bool | None = None,
 ) -> Path:
-    """Normalize and authorize *candidate* below ``policy.root``.
-
-    ``must_exist=None`` skips the existence requirement.
-    ``expect_file=True`` requires a file when the path exists.
-    ``expect_file=False`` requires a directory when the path exists.
-    """
+    """Normalize and authorize *candidate* below ``policy.root``."""
 
     root = policy.canonical_root()
     raw = Path(candidate).expanduser()
@@ -65,12 +82,62 @@ def resolve_authorized_path(
     return canonical
 
 
-def _reject_symlink_chain(root: Path, target: Path) -> None:
-    """Reject symlinks from root to the requested target.
+def validate_write_target(
+    target: Path,
+    data_size: int,
+    constraints: WriteConstraints | None = None,
+) -> None:
+    """Validate size, suffix, permission and free-space constraints."""
 
-    This intentionally checks lexical path components before final resolution,
-    so a symlink cannot silently redirect an apparently safe relative path.
-    """
+    limits = constraints or WriteConstraints()
+    if limits.max_bytes is not None and data_size > limits.max_bytes:
+        raise StorageLimitError(
+            f"Payload size {data_size} exceeds limit {limits.max_bytes} bytes"
+        )
+
+    if limits.allowed_suffixes is not None:
+        normalized = {suffix.lower() for suffix in limits.allowed_suffixes}
+        if target.suffix.lower() not in normalized:
+            raise ValidationError(
+                f"File suffix {target.suffix or '<none>'} is not allowed"
+            )
+
+    parent = target.parent
+    if not parent.is_dir():
+        raise ValidationError(f"Parent directory does not exist: {parent}")
+    _assert_directory_writable(parent)
+
+    required_free = data_size + limits.min_free_bytes
+    try:
+        free = shutil.disk_usage(parent).free
+    except OSError as exc:
+        raise PermissionDeniedError(
+            f"Cannot inspect free space for {parent}: {exc}"
+        ) from exc
+    if free < required_free:
+        raise StorageLimitError(
+            f"Insufficient free space: need {required_free}, available {free}"
+        )
+
+
+def _assert_directory_writable(path: Path) -> None:
+    """Fail early for directories without any write bit or access permission."""
+
+    try:
+        mode = path.stat().st_mode
+    except OSError as exc:
+        raise PermissionDeniedError(f"Cannot inspect directory permissions: {path}") from exc
+
+    if os.name != "nt":
+        write_bits = stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
+        if mode & write_bits == 0:
+            raise PermissionDeniedError(f"Directory has no write permission: {path}")
+    if not os.access(path, os.W_OK):
+        raise PermissionDeniedError(f"Directory is not writable: {path}")
+
+
+def _reject_symlink_chain(root: Path, target: Path) -> None:
+    """Reject symlinks from root to the requested target."""
 
     root = root.resolve(strict=False)
     lexical = target if target.is_absolute() else root / target

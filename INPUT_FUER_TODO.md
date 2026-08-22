@@ -2,14 +2,13 @@
 
 Nur offene, fachlich begründete, priorisierte und nicht duplizierte Verbesserungen eintragen. Erledigte Punkte entfernen oder in eine Historie verschieben.
 
-## 2.1.x — Executable Foundation Hardening
-- [ ] Zentrale plattformübergreifende Root-Auflösung für `user_config`, `user_content`, `derived_data`, `operational_data` und `recovery_data` ergänzen.
-- [ ] Pfadvalidator um Größen-, Format-/Magic-, Schema-, Rechte- und freien-Speicher-Prüfungen erweitern, jeweils nur wo fachlich relevant.
-- [ ] Safe-IO gegen TOCTOU-/Symlink-Rennen weiter härten (plattformabhängige dirfd/openat-Strategie prüfen).
-- [ ] Backup-/Recovery-Hook vor `backup_required`-Writes integrieren.
+## 2.1.2 — Foundation Hardening Restpunkte
+- [ ] Format-/Magic-Byte-Prüfungen als operationstypabhängige Validatoren ergänzen; nicht jede Datei pauschal prüfen.
+- [ ] Windows-Dateioperationen um eine möglichst handle-basierte No-Follow-/Race-Abwehr ergänzen; POSIX nutzt bereits Directory-FD/O_NOFOLLOW, wo verfügbar.
+- [ ] Für extrem konkurrierende Schreibpfade optionalen Lock-/Lease-Vertrag oder Compare-and-Swap-Strategie definieren.
 - [ ] Fehler→Nutzerhinweis-Abbildung zentral definieren.
 - [ ] Logging um Korrelations-ID, Dauer, strukturierte Felder und datensparsamen Diagnoseexport erweitern.
-- [ ] Tests für Schreibfehler, unterbrochene Writes, fehlende Rechte und beschädigte Stage-/Finaldaten ergänzen.
+- [ ] Failure Injection um simulierten Plattenvollzustand, erzwungenen Backup-Fehler und Prozessabbruch-/Crash-Szenarien erweitern.
 
 ## 2.2.0 — Quality Gate Automation
 - [ ] G0–G8 aus `docs/QUALITY_GATES.md` als registrierbare Gates im Validator abbilden.
@@ -47,5 +46,15 @@ Nur offene, fachlich begründete, priorisierte und nicht duplizierte Verbesserun
 - [ ] Migration-/Upgrade-/Rollback-Hinweise aus Metadaten erzeugbar machen.
 - [ ] Reproduzierbaren Build-/Packaging-Pfad definieren.
 
+## Erledigt in 2.1.1
+- Plattformübergreifende User-Root-Auflösung für mutable Datenklassen.
+- Größen-, Suffix-, Rechte- und Freispeicherprüfung für Writes.
+- JSON-Schema-/Shape-Validator-Hook vor dem Schreiben.
+- POSIX Directory-FD/O_NOFOLLOW-Härtung und wiederholte Pfadvalidierung.
+- interner Rollback-Snapshot vor dem Überschreiben bestehender Dateien.
+- optionaler SHA-256-verifizierter Backup-Hook.
+- Erkennung konkurrierender Zieländerungen und neu auftauchender Zieldateien.
+- Failure-Injection-Tests für Abbruch, Korruption, Rechte, Rollback und Parent-Swap.
+
 ## Priorität
-**Nächster logischer Schritt: 2.1.x — Foundation Hardening.** Der sichere Kern ist vorhanden; als Nächstes werden Root-Auflösung, Rechte/Schema/Format-Prüfung, Recovery-Hooks sowie Fehler- und Loggingkontext vervollständigt. Für die neue Startroutine ist danach das kontrollierte Beenden laufender Backends die höchste UI-Reliability-Aufgabe; anschließend werden G0–G8 automatisiert.
+**Nächster logischer Schritt: 2.2.0 — Quality Gate Automation.** Der Storage-Kern ist jetzt deutlich stärker gegen Datenverlust und Race-/Korruptionsfälle gehärtet. Als nächstes sollten Ruff, statische Typprüfung, G0–G8 und JSON-Reports die Codequalität automatisch und reproduzierbar erzwingen. Parallel kann 2.1.2 die wenigen plattformspezifischen Restpunkte schließen.

@@ -4,18 +4,14 @@ Globales Engineering-Fundament für wartbare, robuste, modulare, datenintegritä
 
 ## Aktueller Stand
 
-Standards-Version: **2.0.0**
-Executable Foundation: **2.1.0**
+Standards-Version: **2.0.0**  
+Executable Foundation: **2.1.1**
 
 MASTERCORE ist kein einzelnes Tool, sondern ein wiederverwendbares Architektur-, Qualitäts-, Daten-, UI- und Release-Fundament für zukünftige Multi-Modul-, Datenbank-, Medien-, Automations-, Desktop- und Web-Werkzeuge.
 
 ## Klick & Start
 
-Die Desktopoberfläche prüft einen gewählten Python-Projektordner, erstellt darin bei Bedarf eine
-isolierte `.venv`, installiert dessen `requirements.txt`, prüft danach erneut und startet einen
-vorhandenen Einstiegspunkt (`run.py`, `main.py` oder `app.py`). Alle Schritte erscheinen mit
-Textstatus, Farbe, einfacher Erklärung, Lösung und optionalen technischen Details im selben Fenster.
-Das Protokoll kann zusätzlich als JSON gespeichert werden.
+Die Desktopoberfläche prüft einen gewählten Python-Projektordner, erstellt darin bei Bedarf eine isolierte `.venv`, installiert dessen `requirements.txt`, prüft danach erneut und startet einen vorhandenen Einstiegspunkt (`run.py`, `main.py` oder `app.py`). Alle Schritte erscheinen mit Textstatus, Farbe, einfacher Erklärung, Lösung und optionalen technischen Details im selben Fenster. Das Protokoll kann zusätzlich als JSON gespeichert werden.
 
 ```bash
 python3 -m venv .venv
@@ -23,10 +19,7 @@ python3 -m venv .venv
 .venv/bin/mastercore-start
 ```
 
-Tastatur: `Tab` wechselt zwischen Bedienelementen, `Strg+O` öffnet die Ordnerwahl und
-`Strg+Eingabe` startet die Prüfung. MASTERCORE erweitert keine Systemrechte und führt kein
-pauschales `chmod` aus. Fehlende Rechte werden verständlich gemeldet, statt die Sicherheit des
-Projektordners unbemerkt zu verändern.
+Tastatur: `Tab` wechselt zwischen Bedienelementen, `Strg+O` öffnet die Ordnerwahl und `Strg+Eingabe` startet die Prüfung. MASTERCORE erweitert keine Systemrechte und führt kein pauschales `chmod` aus. Fehlende Rechte werden verständlich gemeldet, statt die Sicherheit des Projektordners unbemerkt zu verändern.
 
 ## Kernprinzip
 
@@ -40,18 +33,36 @@ Projektordners unbemerkt zu verändern.
 6. Erfolg nur mit realem Nachweis ausweisen.
 7. nur betroffene Dokumentation/TODOs synchronisieren.
 
-## Ausführbarer Qualitätskern 2.1.0
+## Ausführbarer Qualitätskern 2.1.1
 
-Neu vorhanden:
+Vorhanden:
 
-- `src/mastercore/domain/errors.py` — zentrale typisierte Fehlerhierarchie.
+- `src/mastercore/domain/errors.py` — zentrale typisierte Fehlerhierarchie inklusive Schema- und Storage-Limit-Fehlern.
 - `src/mastercore/domain/data_classes.py` — verbindliche Datenklassen.
-- `src/mastercore/infrastructure/paths.py` — Root-, Traversal-, Symlink- und Typprüfung.
-- `src/mastercore/infrastructure/storage.py` — temp → Hashprüfung → atomarer Replace → Endprüfung.
+- `src/mastercore/infrastructure/user_roots.py` — getrennte, plattformabhängige Nutzerpfade für Konfiguration, Inhalte, Cache, Logs, Backups und Exporte.
+- `src/mastercore/infrastructure/paths.py` — Root-, Traversal-, Symlink-, Größen-, Suffix-, Rechte- und Freispeicherprüfung.
+- `src/mastercore/infrastructure/storage.py` — Stage → Hashprüfung → Rollback-Snapshot → atomarer Replace → Endprüfung.
 - `src/mastercore/infrastructure/logging.py` — begrenztes rotierendes Datei-Logging.
 - `tools/validate_mastercore.py` — Zero-Dependency Selfcheck für Governance-/Versionskonsistenz.
-- `tests/` — Unit- und Negativtests.
+- `tests/` — Unit-, Negativ-, Recovery- und Failure-Injection-Tests.
 - `.github/workflows/quality.yml` — automatische Compile-, Contract- und Testprüfung.
+
+### Storage Hardening
+
+Schreibende Dateioperationen können jetzt zusätzlich:
+
+- maximale Payload-Größe begrenzen,
+- erlaubte Dateiendungen einschränken,
+- freien Speicher vorab prüfen,
+- fehlende Schreibrechte früh erkennen,
+- JSON-Daten vor dem Schreiben durch einen Schema-/Shape-Validator prüfen,
+- bestehende Dateien vor dem Replace intern als Rollback-Snapshot sichern,
+- optionale, SHA-256-verifizierte dauerhafte Backups erzeugen,
+- konkurrierende Änderungen am Ziel vor dem Replace erkennen,
+- auf POSIX den Zielordner per Directory-FD binden und `O_NOFOLLOW`/dir-fd-Operationen nutzen,
+- bei Fehlern nach dem Replace den vorherigen Zustand wiederherstellen.
+
+Die Failure-Injection-Tests provozieren unter anderem Schreibabbrüche, beschädigte Stage-/Finaldaten, fehlende Rechte, konkurrierende Zieländerungen, neu auftauchende Zieldateien und einen Parent-Verzeichnis-Swap.
 
 ### Lokale Prüfung unter Linux/Kubuntu
 
@@ -105,6 +116,7 @@ Nutzerdaten liegen getrennt außerhalb dieser Basistooldaten.
 ## Datenklassen
 
 MASTERCORE unterscheidet verbindlich:
+
 - `immutable_app_data`
 - `user_config`
 - `user_content`
