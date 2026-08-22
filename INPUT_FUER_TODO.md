@@ -10,15 +10,14 @@ Nur offene, fachlich begründete, priorisierte und nicht duplizierte Verbesserun
 - [ ] Logging um Korrelations-ID, Dauer, strukturierte Felder und datensparsamen Diagnoseexport erweitern.
 - [ ] Failure Injection um simulierten Plattenvollzustand, erzwungenen Backup-Fehler und Prozessabbruch-/Crash-Szenarien erweitern.
 
-## 2.2.0 — Quality Gate Automation
-- [ ] G0–G8 aus `docs/QUALITY_GATES.md` als registrierbare Gates im Validator abbilden.
-- [ ] PASS/WARN/FAIL/NOT_RUN zusätzlich maschinenlesbar als JSON ausgeben.
-- [ ] Dokumentations-/Versionskonsistenz auf alle normativen Dateien erweitern.
-- [ ] Ruff als reproduzierbaren Lint-/Import-/Bugbear-Gate integrieren.
-- [ ] Statische Typprüfung mit mypy oder pyright als reproduzierbares Gate integrieren.
-- [ ] Abhängigkeits-/Supply-Chain-Prüfung mit minimaler zusätzlicher Toollast planen.
-- [ ] Backup-/Restore-/Recovery-Testmatrix ergänzen.
-- [ ] Branch Protection auf erfolgreichen Quality-Workflow vorbereiten.
+## 2.2.1 — Quality Gate Hardening
+- [ ] G6 UI/Accessibility mit echter automatisierter Acceptance-Harness statt `NOT_RUN` abdecken.
+- [ ] G8 Release mit Build-, Manifest-, Hash- und Reproduzierbarkeitsprüfung automatisieren.
+- [ ] Dokumentations-/Versionskonsistenz um semantische Querverweise zwischen normativen Dateien erweitern.
+- [ ] Abhängigkeits-/Supply-Chain-Prüfung mit minimaler zusätzlicher Toollast integrieren.
+- [ ] Quality-Evidence um Git-Commit, Tree-SHA und optional Artefakt-Hashes erweitern.
+- [ ] Branch Protection so konfigurieren, dass `MASTERCORE Quality` vor Merge nach `main` zwingend erfolgreich sein muss.
+- [ ] Optional einen schnellen Changed-Files-Modus ergänzen, ohne das vollständige G7-Regressionsgate im PR zu ersetzen.
 
 ## 2.3.0 — UI Foundation
 - [ ] Laufende Backendprozesse kontrolliert abbrechen und beim Fensterschließen mit Timeout beenden.
@@ -46,6 +45,17 @@ Nur offene, fachlich begründete, priorisierte und nicht duplizierte Verbesserun
 - [ ] Migration-/Upgrade-/Rollback-Hinweise aus Metadaten erzeugbar machen.
 - [ ] Reproduzierbaren Build-/Packaging-Pfad definieren.
 
+## Erledigt in 2.2.0
+- G0–G8 als ausführbare Quality-Gate-Engine abgebildet.
+- Pflichtprofil mit G0, G1, G2, G3, G4, G5 und G7 eingeführt.
+- `PASS/WARN/FAIL/NOT_RUN` maschinenlesbar und strikt aggregiert.
+- Ruff als reproduzierbares Lint-/Import-/Bugbear-Gate integriert.
+- mypy in striktem Modus als Typgate integriert.
+- JSON-Evidence mit Befehlen, Returncodes, Laufzeiten und begrenzter Ausgabe eingeführt.
+- Evidence wird auch bei fehlgeschlagenem Gate als GitHub-Actions-Artefakt hochgeladen.
+- Gate-Aggregation und atomarer Evidence-Write besitzen eigene Unit-Tests.
+- Bestehende Ruff-/mypy-Funde im Produkt- und Testcode behoben statt ignoriert.
+
 ## Erledigt in 2.1.1
 - Plattformübergreifende User-Root-Auflösung für mutable Datenklassen.
 - Größen-, Suffix-, Rechte- und Freispeicherprüfung für Writes.
@@ -57,4 +67,4 @@ Nur offene, fachlich begründete, priorisierte und nicht duplizierte Verbesserun
 - Failure-Injection-Tests für Abbruch, Korruption, Rechte, Rollback und Parent-Swap.
 
 ## Priorität
-**Nächster logischer Schritt: 2.2.0 — Quality Gate Automation.** Der Storage-Kern ist jetzt deutlich stärker gegen Datenverlust und Race-/Korruptionsfälle gehärtet. Als nächstes sollten Ruff, statische Typprüfung, G0–G8 und JSON-Reports die Codequalität automatisch und reproduzierbar erzwingen. Parallel kann 2.1.2 die wenigen plattformspezifischen Restpunkte schließen.
+**Nächster logischer Schritt: 2.2.1 — Quality Gate Hardening.** Die Quality Gate Engine erzwingt jetzt statische Qualität, Tests, Datenintegrität und Recovery reproduzierbar. Der größte verbleibende Hebel ist Branch Protection plus echte G6-/G8-Harnesses; parallel können die plattformspezifischen 2.1.2-Restpunkte geschlossen werden.
