@@ -18,7 +18,7 @@ class StartupWindowAcceptanceTests(unittest.TestCase):
         self.root.destroy()
 
     def test_initial_focus_and_keyboard_shortcuts_are_available(self) -> None:
-        self.assertIs(self.root.focus_get(), self.window.path_entry)
+        self.assertIs(self.root.focus_lastfor(), self.window.path_entry)
         self.assertTrue(self.root.bind("<Control-o>"))
         self.assertTrue(self.root.bind("<Control-Return>"))
 
