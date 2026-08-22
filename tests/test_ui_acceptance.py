@@ -1,6 +1,6 @@
 import tkinter as tk
-from tkinter import font as tkfont
 import unittest
+from tkinter import font as tkfont
 
 from mastercore.application.startup import StartupService
 from mastercore.domain.startup import EventStatus, StartupEvent
