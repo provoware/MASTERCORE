@@ -184,11 +184,7 @@ def run_quality_gates(repo: Path, *, profile: str = "ci") -> QualityReport:
             "Release artifact validation is outside the normal PR profile.",
         ),
     )
-    required = (
-        CI_REQUIRED_GATES
-        if profile == "ci"
-        else frozenset({"G0", "G1"})
-    )
+    required = CI_REQUIRED_GATES if profile == "ci" else frozenset({"G0", "G1"})
     return QualityReport(
         profile=profile,
         overall_status=aggregate_status(gates, required),
@@ -243,9 +239,11 @@ def validate_repository_contract(repo: Path) -> list[str]:
         "docs/PATCH_AND_VALIDATION_PROTOCOL.md",
         "docs/UI_UX_ACCESSIBILITY_STANDARD.md",
         "docs/RELEASE_GOVERNANCE.md",
+        "docs/BRANCH_PROTECTION.md",
         "pyproject.toml",
         ".github/workflows/quality.yml",
         "tests/test_ui_acceptance.py",
+        "src/mastercore/__init__.py",
     )
     for relative in required:
         if not (repo / relative).is_file():
@@ -288,6 +286,15 @@ def validate_repository_contract(repo: Path) -> list[str]:
     project = pyproject.get("project")
     if not isinstance(project, dict) or project.get("version") != ENGINE_VERSION:
         failures.append("pyproject project.version differs from quality engine version")
+
+    runtime_marker = f'__version__ = "{ENGINE_VERSION}"'
+    try:
+        runtime_text = (repo / "src/mastercore/__init__.py").read_text(encoding="utf-8")
+    except OSError as exc:
+        failures.append(f"runtime version unreadable: {exc}")
+    else:
+        if runtime_marker not in runtime_text:
+            failures.append("mastercore.__version__ differs from quality engine version")
     return failures
 
 
@@ -345,10 +352,7 @@ def _command_gate(
     environment: dict[str, str],
     commands: tuple[tuple[str, ...], ...],
 ) -> GateResult:
-    evidence = tuple(
-        _run_command(command, repo, environment)
-        for command in commands
-    )
+    evidence = tuple(_run_command(command, repo, environment) for command in commands)
     if any(item.return_code is None for item in evidence):
         return GateResult(
             gate,
