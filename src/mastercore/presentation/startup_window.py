@@ -52,17 +52,24 @@ class StartupWindow:
             sticky="w",
             padx=(0, 8),
         )
-        self.path_entry = ttk.Entry(controls, textvariable=self.project)
-        self.path_entry.grid(row=0, column=1, sticky="ew")
-        ttk.Button(controls, text="Ordner wählen…", command=self._choose).grid(
-            row=0,
-            column=2,
-            padx=8,
+        self.path_entry = ttk.Entry(
+            controls,
+            textvariable=self.project,
+            takefocus=True,
         )
+        self.path_entry.grid(row=0, column=1, sticky="ew")
+        self.choose_button = ttk.Button(
+            controls,
+            text="Ordner wählen…",
+            command=self._choose,
+            takefocus=True,
+        )
+        self.choose_button.grid(row=0, column=2, padx=8)
         self.start_button = ttk.Button(
             controls,
             text="Prüfen und starten",
             command=self._start,
+            takefocus=True,
         )
         self.start_button.grid(row=0, column=3)
 
@@ -80,6 +87,7 @@ class StartupWindow:
             state="disabled",
             padx=8,
             pady=8,
+            takefocus=True,
         )
         self.output.grid(row=0, column=0, sticky="nsew")
         scrollbar = ttk.Scrollbar(output_frame, command=self.output.yview)
@@ -92,11 +100,13 @@ class StartupWindow:
         footer.grid(row=2, column=0, sticky="ew")
         footer.columnconfigure(0, weight=1)
         ttk.Label(footer, textvariable=self.status).grid(row=0, column=0, sticky="w")
-        ttk.Button(
+        self.export_button = ttk.Button(
             footer,
             text="JSON-Protokoll speichern…",
             command=self._export,
-        ).grid(row=0, column=1)
+            takefocus=True,
+        )
+        self.export_button.grid(row=0, column=1)
         self.root.bind("<Control-o>", lambda _event: self._choose())
         self.root.bind("<Control-Return>", lambda _event: self._start())
         self.path_entry.focus_set()
