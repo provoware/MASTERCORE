@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import os
-from pathlib import Path
 import secrets
+from contextlib import suppress
+from dataclasses import dataclass
+from pathlib import Path
 
 from mastercore.domain.errors import (
     DataIntegrityError,
@@ -304,10 +305,8 @@ def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
 
 def fsync_directory(path: Path, dir_fd: int | None) -> None:
     if dir_fd is not None:
-        try:
+        with suppress(OSError):
             os.fsync(dir_fd)
-        except OSError:
-            pass
         return
     flags = getattr(os, "O_DIRECTORY", 0) | os.O_RDONLY
     try:
@@ -315,18 +314,15 @@ def fsync_directory(path: Path, dir_fd: int | None) -> None:
     except OSError:
         return
     try:
-        os.fsync(fd)
-    except OSError:
-        pass
+        with suppress(OSError):
+            os.fsync(fd)
     finally:
         os.close(fd)
 
 
 def safe_close(fd: int) -> None:
-    try:
+    with suppress(OSError):
         os.close(fd)
-    except OSError:
-        pass
 
 
 def _assert_directory_identity(parent: Path, dir_fd: int) -> None:
