@@ -12,6 +12,10 @@ class ValidationError(MastercoreError):
     """Input, schema, or invariant validation failed."""
 
 
+class SchemaValidationError(ValidationError):
+    """Structured data failed its declared schema/shape validation."""
+
+
 class ConfigurationError(MastercoreError):
     """Configuration is missing, invalid, or contradictory."""
 
@@ -22,6 +26,10 @@ class PermissionDeniedError(MastercoreError):
 
 class StorageError(MastercoreError):
     """A filesystem/storage operation failed safely."""
+
+
+class StorageLimitError(StorageError):
+    """A configured storage size/capacity limit would be exceeded."""
 
 
 class DataIntegrityError(StorageError):
