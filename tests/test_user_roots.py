@@ -1,6 +1,6 @@
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 from mastercore.domain.data_classes import DataClass
 from mastercore.domain.errors import ConfigurationError
@@ -19,10 +19,16 @@ class UserRootTests(unittest.TestCase):
             }
             roots = resolve_user_roots(home=home, env=env, platform="linux")
             self.assertEqual(roots.config, home / "cfg" / "MASTERCORE")
-            self.assertEqual(roots.content, home / "data" / "MASTERCORE" / "content")
+            self.assertEqual(
+                roots.content,
+                home / "data" / "MASTERCORE" / "content",
+            )
             self.assertEqual(roots.cache, home / "cache" / "MASTERCORE")
             self.assertEqual(roots.logs, home / "state" / "MASTERCORE" / "logs")
-            self.assertEqual(roots.backups, home / "data" / "MASTERCORE" / "backups")
+            self.assertEqual(
+                roots.backups,
+                home / "data" / "MASTERCORE" / "backups",
+            )
 
     def test_windows_roots_use_roaming_and_local(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -33,16 +39,34 @@ class UserRootTests(unittest.TestCase):
             }
             roots = resolve_user_roots(home=home, env=env, platform="win32")
             self.assertEqual(roots.config, home / "roaming" / "MASTERCORE")
-            self.assertEqual(roots.content, home / "local" / "MASTERCORE" / "content")
+            self.assertEqual(
+                roots.content,
+                home / "local" / "MASTERCORE" / "content",
+            )
 
     def test_data_classes_map_to_separate_mutable_roots(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             roots = resolve_user_roots(home=Path(raw), env={}, platform="linux")
-            self.assertEqual(roots.for_data_class(DataClass.USER_CONFIG), roots.config)
-            self.assertEqual(roots.for_data_class(DataClass.USER_CONTENT), roots.content)
-            self.assertEqual(roots.for_data_class(DataClass.DERIVED_DATA), roots.cache)
-            self.assertEqual(roots.for_data_class(DataClass.OPERATIONAL_DATA), roots.logs)
-            self.assertEqual(roots.for_data_class(DataClass.RECOVERY_DATA), roots.backups)
+            self.assertEqual(
+                roots.for_data_class(DataClass.USER_CONFIG),
+                roots.config,
+            )
+            self.assertEqual(
+                roots.for_data_class(DataClass.USER_CONTENT),
+                roots.content,
+            )
+            self.assertEqual(
+                roots.for_data_class(DataClass.DERIVED_DATA),
+                roots.cache,
+            )
+            self.assertEqual(
+                roots.for_data_class(DataClass.OPERATIONAL_DATA),
+                roots.logs,
+            )
+            self.assertEqual(
+                roots.for_data_class(DataClass.RECOVERY_DATA),
+                roots.backups,
+            )
             with self.assertRaises(ConfigurationError):
                 roots.for_data_class(DataClass.IMMUTABLE_APP_DATA)
 
@@ -54,9 +78,16 @@ class UserRootTests(unittest.TestCase):
             self.assertTrue(all(path.is_dir() for path in roots.all()))
 
     def test_app_name_cannot_escape(self) -> None:
-        with tempfile.TemporaryDirectory() as raw:
-            with self.assertRaises(ConfigurationError):
-                resolve_user_roots("../escape", home=Path(raw), env={}, platform="linux")
+        with (
+            tempfile.TemporaryDirectory() as raw,
+            self.assertRaises(ConfigurationError),
+        ):
+            resolve_user_roots(
+                "../escape",
+                home=Path(raw),
+                env={},
+                platform="linux",
+            )
 
 
 if __name__ == "__main__":
