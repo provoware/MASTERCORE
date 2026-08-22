@@ -1,77 +1,102 @@
 # MASTERCORE
 
-Globaler Engineering-Standard für wartbare, robuste, modulare und laienfreundliche Werkzeuge.
+Globales Engineering-Fundament für wartbare, robuste, modulare, datenintegritätssichere und laienfreundliche Werkzeuge.
 
 ## Aktueller Stand
 
-Standards-Version: **1.0.0**
+Standards-Version: **2.0.0**
 
-MASTERCORE definiert verbindliche Arbeits-, Architektur-, Daten-, UI-, Qualitäts- und Releaseverträge für zukünftige Module und Tools.
+MASTERCORE ist kein einzelnes Tool, sondern ein wiederverwendbares Architektur-, Qualitäts-, Daten-, UI- und Release-Fundament für zukünftige Multi-Modul-, Datenbank-, Medien-, Automations-, Desktop- und Web-Werkzeuge.
 
 ## Kernprinzip
 
-**Inspect → Decide → Patch → Prove**
+**DISCOVER → CLASSIFY → DESIGN → PATCH → VERIFY → PROVE → RECORD**
 
 1. Ist-Zustand und exakte Patchposition ermitteln.
-2. Risiko, Datenwirkung, Rückbaubarkeit und Testtiefe klassifizieren.
-3. Kleinsten vollständigen Patch durchführen.
-4. Ergebnis mit real ausgeführten Prüfungen nachweisen.
+2. Nutzen, Risiko, Datenwirkung, Reichweite und Rückbaubarkeit klassifizieren.
+3. kleinsten vollständigen Patch planen.
+4. lokal und codesparsam ändern.
+5. risikobasiert prüfen.
+6. Erfolg nur mit realem Nachweis ausweisen.
+7. nur betroffene Dokumentation/TODOs synchronisieren.
 
 ## Verbindliche Dokumente
 
-- `AGENTS.md` — zentrale Experten-Anweisung und Entwicklungsvertrag.
-- `docs/GLOBAL_STANDARDS.md` — technische Referenz und wiederverwendbare Systemstandards.
-- `INPUT_FUER_TODO.md` — nur offene, nicht duplizierte Weiterentwicklungen.
+- `AGENTS.md` — zentrale Experten-Orchestrierung.
+- `docs/EXPERT_ENGINEERING_SYSTEM.md` — vollständige Entscheidungs- und Engineeringlogik.
+- `docs/GLOBAL_STANDARDS.md` — globale technische Referenz.
+- `docs/PATCH_AND_VALIDATION_PROTOCOL.md` — exakte Vor-Ort-Patches und Nachvalidierung.
+- `docs/DATA_STORAGE_CONTRACT.md` — Basistool-/Nutzerdatentrennung, Pfad- und Safe-IO-Vertrag.
+- `docs/UI_UX_ACCESSIBILITY_STANDARD.md` — Designsystem, responsive UI und Barrierefreiheit.
+- `docs/QUALITY_GATES.md` — risikobasierte Qualitätsgates.
+- `docs/RELEASE_GOVERNANCE.md` — Versionierung, Releases und Rollback.
+- `quality-contract.json` — maschinenlesbare Kurzform zentraler Regeln.
+- `INPUT_FUER_TODO.md` — ausschließlich offene, nicht duplizierte nächste Schritte.
 
 ## Architekturziel
 
 ```text
-MASTERCORE/
-├── AGENTS.md
-├── README.md
-├── INPUT_FUER_TODO.md
-├── docs/
-│   └── GLOBAL_STANDARDS.md
-├── src/
-│   ├── domain/
-│   ├── application/
-│   ├── infrastructure/
-│   ├── presentation/
-│   └── composition/
-├── resources/
-├── config/
-│   └── defaults/
-├── tests/
-└── tools/
+src/
+├── domain/          # Fachlogik, Invarianten, Modelle
+├── application/     # Use Cases, Workflows, Ports
+├── infrastructure/  # Dateisystem, DB, Netzwerk, OS-Adapter
+├── presentation/    # UI, Views, Controller/ViewModels
+└── composition/     # Start, Dependency Wiring, Konfiguration
+
+resources/           # unveränderliche ausgelieferte Ressourcen
+config/defaults/     # Standardkonfiguration
+tests/               # automatisierte Prüfungen
+tools/               # Entwickler-/Validierungswerkzeuge
 ```
 
-Nutzerdaten liegen ausdrücklich außerhalb der Basistooldaten. Projekte, Einstellungen, Datenbanken, Layoutzustände, Exporte, Backups, Cache und Logs werden über eine zentrale Path-/Storage-API verwaltet.
+Nutzerdaten liegen getrennt außerhalb dieser Basistooldaten.
 
-## Qualitätspriorität
+## Datenklassen
+
+MASTERCORE unterscheidet verbindlich:
+- `immutable_app_data`
+- `user_config`
+- `user_content`
+- `derived_data`
+- `operational_data`
+- `recovery_data`
+
+## Safe-IO-Grundsatz
+
+```text
+resolve
+→ normalize
+→ authorize
+→ inspect
+→ stage
+→ operate
+→ validate
+→ commit
+→ verify
+→ report
+```
+
+Erfolg wird erst nach Endvalidierung gemeldet.
+
+## Qualitätsstatus
+
+- `PASS` — ausgeführt und bestanden
+- `WARN` — funktionsfähig mit dokumentierter Restunsicherheit
+- `FAIL` — nicht freigabefähig
+- `NOT_RUN` — nicht geprüft
+
+`NOT_RUN` ist niemals PASS.
+
+## UI-Grundsatz
+
+Oberflächen verwenden zentrale Design-Tokens, wiederverwendbare Komponenten und definierte Zustände. Kleine und große Fenster müssen nutzbar bleiben; wichtige Aktionen dürfen nicht verschwinden oder abgeschnitten werden. Mindestziel für Barrierefreiheit ist WCAG 2.2 AA, soweit anwendbar.
+
+## Entwicklungspriorität
 
 1. Datenintegrität
-2. Recovery und Fehlerfreiheit
-3. Wartbarkeit und Architektur
-4. Entkopplung und Wiederverwendbarkeit
-5. Nutzbarkeit und Barrierefreiheit
-6. Diagnosefähigkeit
-7. Performance
-8. visuelle Verfeinerung
-
-## Zentrale Standards
-
-- sichere Pfad- und Dateioperationen mit Vor-/Nachvalidierung
-- atomare kritische Schreibvorgänge
-- deklarierte Undo-/Recovery-Policy
-- strukturierte Fehlerklassen und Logging
-- zentrale Design-Tokens und wiederverwendbare UI-Komponenten
-- Responsive Design für kleine und große Geräte
-- WCAG-2.2-AA als Accessibility-Mindestziel, soweit anwendbar
-- Dashboard als Arbeitszentrale statt dekorative Oberfläche
-- Tests inklusive Negativ- und Recoverypfaden
-- PASS nur bei tatsächlich ausgeführten Prüfungen
-- laienverständliche Schritt-für-Schritt-Anweisungen mit exakten Befehlen und Erfolgskriterien
-
-## Entwicklungsregel
-
-Keine Änderung ohne belegbaren Nutzen. Keine geratenen Patchpositionen. Keine unnötigen Komplettumbauten. Keine Vermischung von Basistool- und Nutzerdaten. Keine neue Abstraktion ohne klaren fachlichen Grund.
+2. Recovery/Fehlerprävention
+3. Wartbarkeit
+4. Entkopplung/Wiederverwendung
+5. Nutzbarkeit/Barrierefreiheit
+6. Performance
+7. visuelle Verfeinerung
