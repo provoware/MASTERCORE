@@ -9,6 +9,25 @@ Executable Foundation: **2.1.0**
 
 MASTERCORE ist kein einzelnes Tool, sondern ein wiederverwendbares Architektur-, Qualitäts-, Daten-, UI- und Release-Fundament für zukünftige Multi-Modul-, Datenbank-, Medien-, Automations-, Desktop- und Web-Werkzeuge.
 
+## Klick & Start
+
+Die Desktopoberfläche prüft einen gewählten Python-Projektordner, erstellt darin bei Bedarf eine
+isolierte `.venv`, installiert dessen `requirements.txt`, prüft danach erneut und startet einen
+vorhandenen Einstiegspunkt (`run.py`, `main.py` oder `app.py`). Alle Schritte erscheinen mit
+Textstatus, Farbe, einfacher Erklärung, Lösung und optionalen technischen Details im selben Fenster.
+Das Protokoll kann zusätzlich als JSON gespeichert werden.
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -e .
+.venv/bin/mastercore-start
+```
+
+Tastatur: `Tab` wechselt zwischen Bedienelementen, `Strg+O` öffnet die Ordnerwahl und
+`Strg+Eingabe` startet die Prüfung. MASTERCORE erweitert keine Systemrechte und führt kein
+pauschales `chmod` aus. Fehlende Rechte werden verständlich gemeldet, statt die Sicherheit des
+Projektordners unbemerkt zu verändern.
+
 ## Kernprinzip
 
 **DISCOVER → CLASSIFY → DESIGN → PATCH → VERIFY → PROVE → RECORD**

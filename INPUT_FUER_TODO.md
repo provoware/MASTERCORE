@@ -22,6 +22,8 @@ Nur offene, fachlich begründete, priorisierte und nicht duplizierte Verbesserun
 - [ ] Branch Protection auf erfolgreichen Quality-Workflow vorbereiten.
 
 ## 2.3.0 — UI Foundation
+- [ ] Laufende Backendprozesse kontrolliert abbrechen und beim Fensterschließen mit Timeout beenden.
+- [ ] Konfigurierbaren, schema-validierten Backend-Startvertrag statt ausschließlicher Dateinamenerkennung ergänzen.
 - [ ] Zentrale Design-Tokens für Farben, Abstände, Typografie, Radien, Rahmen, Elevation, Control-Größen, Breakpoints, Motion und Layer definieren.
 - [ ] Wiederverwendbare Basis-Komponenten mit vollständigen Zuständen implementieren.
 - [ ] Responsive Größenklassen und Layout-Regeln definieren.
@@ -46,4 +48,4 @@ Nur offene, fachlich begründete, priorisierte und nicht duplizierte Verbesserun
 - [ ] Reproduzierbaren Build-/Packaging-Pfad definieren.
 
 ## Priorität
-**Nächster logischer Schritt: 2.1.x — Foundation Hardening.** Der sichere Kern ist vorhanden; als Nächstes werden Root-Auflösung, Rechte/Schema/Format-Prüfung, Recovery-Hooks sowie Fehler- und Loggingkontext vervollständigt. Danach werden G0–G8 automatisiert.
+**Nächster logischer Schritt: 2.1.x — Foundation Hardening.** Der sichere Kern ist vorhanden; als Nächstes werden Root-Auflösung, Rechte/Schema/Format-Prüfung, Recovery-Hooks sowie Fehler- und Loggingkontext vervollständigt. Für die neue Startroutine ist danach das kontrollierte Beenden laufender Backends die höchste UI-Reliability-Aufgabe; anschließend werden G0–G8 automatisiert.

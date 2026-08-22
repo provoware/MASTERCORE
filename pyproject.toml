@@ -9,6 +9,9 @@ description = "Reusable safety, validation, storage and quality foundation"
 requires-python = ">=3.12"
 dependencies = []
 
+[project.gui-scripts]
+mastercore-start = "mastercore.composition.main:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
