@@ -5,11 +5,11 @@ All filesystem consumers should resolve paths through this module before I/O.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
-from pathlib import Path
 import shutil
 import stat
+from dataclasses import dataclass
+from pathlib import Path
 
 from mastercore.domain.errors import (
     PermissionDeniedError,
@@ -61,9 +61,7 @@ def resolve_authorized_path(
     try:
         canonical.relative_to(root)
     except ValueError as exc:
-        raise PermissionDeniedError(
-            f"Path escapes authorized root: {canonical}"
-        ) from exc
+        raise PermissionDeniedError(f"Path escapes authorized root: {canonical}") from exc
 
     if not policy.allow_symlinks:
         _reject_symlink_chain(root, target)
@@ -73,12 +71,10 @@ def resolve_authorized_path(
         raise ValidationError(f"Path does not exist: {canonical}")
     if must_exist is False and exists:
         raise ValidationError(f"Path already exists: {canonical}")
-
     if exists and expect_file is True and not canonical.is_file():
         raise ValidationError(f"Expected file: {canonical}")
     if exists and expect_file is False and not canonical.is_dir():
         raise ValidationError(f"Expected directory: {canonical}")
-
     return canonical
 
 
@@ -126,7 +122,9 @@ def _assert_directory_writable(path: Path) -> None:
     try:
         mode = path.stat().st_mode
     except OSError as exc:
-        raise PermissionDeniedError(f"Cannot inspect directory permissions: {path}") from exc
+        raise PermissionDeniedError(
+            f"Cannot inspect directory permissions: {path}"
+        ) from exc
 
     if os.name != "nt":
         write_bits = stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
