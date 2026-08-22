@@ -10,13 +10,19 @@ permissions:
 
 jobs:
   quality:
+    name: MASTERCORE Quality
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
+      - name: Install headless UI runtime
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends xvfb xauth tk
       - name: Install project and quality tools
         run: python -m pip install --disable-pip-version-check -e ".[quality]"
       - name: Run G0-G8 quality gate engine
