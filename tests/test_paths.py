@@ -1,11 +1,16 @@
-from pathlib import Path
 import os
 import tempfile
 import unittest
+from contextlib import suppress
+from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from mastercore.domain.errors import PermissionDeniedError, StorageLimitError, ValidationError
+from mastercore.domain.errors import (
+    PermissionDeniedError,
+    StorageLimitError,
+    ValidationError,
+)
 from mastercore.infrastructure.paths import (
     PathPolicy,
     WriteConstraints,
@@ -42,10 +47,8 @@ class PathValidationTests(unittest.TestCase):
                     resolve_authorized_path("link/x.txt", PathPolicy(root))
             finally:
                 link.unlink(missing_ok=True)
-                try:
+                with suppress(OSError):
                     outside.rmdir()
-                except OSError:
-                    pass
 
     def test_payload_size_limit_is_enforced(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -66,16 +69,18 @@ class PathValidationTests(unittest.TestCase):
     def test_free_space_reserve_is_enforced(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             target = Path(raw) / "x.bin"
-            with mock.patch(
-                "mastercore.infrastructure.paths.shutil.disk_usage",
-                return_value=SimpleNamespace(total=100, used=90, free=10),
+            with (
+                mock.patch(
+                    "mastercore.infrastructure.paths.shutil.disk_usage",
+                    return_value=SimpleNamespace(total=100, used=90, free=10),
+                ),
+                self.assertRaises(StorageLimitError),
             ):
-                with self.assertRaises(StorageLimitError):
-                    validate_write_target(
-                        target,
-                        5,
-                        WriteConstraints(min_free_bytes=10),
-                    )
+                validate_write_target(
+                    target,
+                    5,
+                    WriteConstraints(min_free_bytes=10),
+                )
 
     @unittest.skipIf(os.name == "nt", "POSIX permission bits required")
     def test_missing_write_bits_are_rejected(self) -> None:
