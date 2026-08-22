@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from dataclasses import dataclass
 import hashlib
 import json
 import os
-from pathlib import Path
 import secrets
 import shutil
+from collections.abc import Callable
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from mastercore.domain.errors import (
@@ -197,7 +197,7 @@ def atomic_write_bytes(
             ) from exc
         if isinstance(exc, MastercoreError):
             raise
-        if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+        if isinstance(exc, KeyboardInterrupt | SystemExit):
             raise
         raise StorageError(f"Atomic write failed safely for {target}: {exc}") from exc
     finally:
