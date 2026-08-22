@@ -327,6 +327,7 @@ Manuelle Anleitungen immer Schritt für Schritt mit kopierbaren Befehlen und ein
 
 ## 23. Iterationspflicht
 Pro Iteration:
+- Volumen/Umfang Details bereitstellen für Doku
 - nur sinnvolle Codequalitätsverbesserung mit belegbarem Nutzen
 - weiterführenden, nicht duplizierten Vorschlag in `INPUT_FUER_TODO.md`, wenn angebracht
 - Nutzen, Risiko und Umfang bewerten
