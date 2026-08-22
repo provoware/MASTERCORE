@@ -32,6 +32,7 @@ class StartupWindow:
         self.pending: queue.Queue[StartupEvent] = queue.Queue()
         self.project = tk.StringVar(value=str(Path.cwd()))
         self.status = tk.StringVar(value="Bereit. Wählen Sie einen Projektordner.")
+        self._busy = False
         self._build()
         self.root.after(100, self._drain_events)
 
@@ -45,20 +46,41 @@ class StartupWindow:
         controls = ttk.Frame(self.root, padding=16)
         controls.grid(row=0, column=0, sticky="ew")
         controls.columnconfigure(1, weight=1)
-        ttk.Label(controls, text="Projektordner:").grid(row=0, column=0, sticky="w", padx=(0, 8))
+        ttk.Label(controls, text="Projektordner:").grid(
+            row=0,
+            column=0,
+            sticky="w",
+            padx=(0, 8),
+        )
         self.path_entry = ttk.Entry(controls, textvariable=self.project)
         self.path_entry.grid(row=0, column=1, sticky="ew")
         ttk.Button(controls, text="Ordner wählen…", command=self._choose).grid(
-            row=0, column=2, padx=8
+            row=0,
+            column=2,
+            padx=8,
         )
-        self.start_button = ttk.Button(controls, text="Prüfen und starten", command=self._start)
+        self.start_button = ttk.Button(
+            controls,
+            text="Prüfen und starten",
+            command=self._start,
+        )
         self.start_button.grid(row=0, column=3)
 
-        output_frame = ttk.LabelFrame(self.root, text="Ereignisse und Lösungen", padding=8)
+        output_frame = ttk.LabelFrame(
+            self.root,
+            text="Ereignisse und Lösungen",
+            padding=8,
+        )
         output_frame.grid(row=1, column=0, sticky="nsew", padx=16, pady=(0, 8))
         output_frame.columnconfigure(0, weight=1)
         output_frame.rowconfigure(0, weight=1)
-        self.output = tk.Text(output_frame, wrap="word", state="disabled", padx=8, pady=8)
+        self.output = tk.Text(
+            output_frame,
+            wrap="word",
+            state="disabled",
+            padx=8,
+            pady=8,
+        )
         self.output.grid(row=0, column=0, sticky="nsew")
         scrollbar = ttk.Scrollbar(output_frame, command=self.output.yview)
         scrollbar.grid(row=0, column=1, sticky="ns")
@@ -71,7 +93,9 @@ class StartupWindow:
         footer.columnconfigure(0, weight=1)
         ttk.Label(footer, textvariable=self.status).grid(row=0, column=0, sticky="w")
         ttk.Button(
-            footer, text="JSON-Protokoll speichern…", command=self._export
+            footer,
+            text="JSON-Protokoll speichern…",
+            command=self._export,
         ).grid(row=0, column=1)
         self.root.bind("<Control-o>", lambda _event: self._choose())
         self.root.bind("<Control-Return>", lambda _event: self._start())
@@ -82,12 +106,16 @@ class StartupWindow:
         if selected:
             self.project.set(selected)
 
+    def _set_busy(self, busy: bool) -> None:
+        self._busy = busy
+        self.start_button.configure(state="disabled" if busy else "normal")
+
     def _start(self) -> None:
-        if self.start_button.instate(["disabled"]):
+        if self._busy:
             return
         self.events.clear()
         self._clear_output()
-        self.start_button.state(["disabled"])
+        self._set_busy(True)
         self.status.set("Start läuft. Bitte warten…")
         threading.Thread(
             target=self.service.run,
@@ -104,10 +132,12 @@ class StartupWindow:
             self.events.append(event)
             self._append_event(event)
             if event.status in {EventStatus.FAIL, EventStatus.PASS} and event.step == "Backend":
-                self.start_button.state(["!disabled"])
+                self._set_busy(False)
             if event.status is EventStatus.FAIL:
-                self.start_button.state(["!disabled"])
-                self.status.set("Start fehlgeschlagen. Lösung und Details stehen im Protokoll.")
+                self._set_busy(False)
+                self.status.set(
+                    "Start fehlgeschlagen. Lösung und Details stehen im Protokoll."
+                )
             else:
                 self.status.set(f"{event.status.value}: {event.message}")
         self.root.after(100, self._drain_events)
@@ -147,7 +177,8 @@ class StartupWindow:
         )
         atomic_write_text(target.name, payload + "\n", PathPolicy(target.parent))
         messagebox.showinfo(
-            "Gespeichert", "Das maschinenlesbare Protokoll wurde sicher gespeichert."
+            "Gespeichert",
+            "Das maschinenlesbare Protokoll wurde sicher gespeichert.",
         )
 
 

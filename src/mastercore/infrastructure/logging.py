@@ -30,10 +30,12 @@ def configure_file_logging(
 
     resolved = str(log_file)
     for handler in logger.handlers:
-        if isinstance(handler, RotatingFileHandler):
-            if str(Path(handler.baseFilename).resolve(strict=False)) == resolved:
-                handler.setLevel(level)
-                return logger
+        if (
+            isinstance(handler, RotatingFileHandler)
+            and str(Path(handler.baseFilename).resolve(strict=False)) == resolved
+        ):
+            handler.setLevel(level)
+            return logger
 
     handler = RotatingFileHandler(
         log_file,
@@ -43,9 +45,7 @@ def configure_file_logging(
     )
     handler.setLevel(level)
     handler.setFormatter(
-        logging.Formatter(
-            "%(asctime)s %(levelname)s %(name)s %(message)s"
-        )
+        logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
     )
     logger.addHandler(handler)
     return logger

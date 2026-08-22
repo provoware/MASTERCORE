@@ -5,7 +5,8 @@ Globales Engineering-Fundament für wartbare, robuste, modulare, datenintegritä
 ## Aktueller Stand
 
 Standards-Version: **2.0.0**  
-Executable Foundation: **2.1.1**
+Executable Foundation: **2.1.1**  
+Quality Automation: **2.2.0**
 
 MASTERCORE ist kein einzelnes Tool, sondern ein wiederverwendbares Architektur-, Qualitäts-, Daten-, UI- und Release-Fundament für zukünftige Multi-Modul-, Datenbank-, Medien-, Automations-, Desktop- und Web-Werkzeuge.
 
@@ -27,11 +28,11 @@ Tastatur: `Tab` wechselt zwischen Bedienelementen, `Strg+O` öffnet die Ordnerwa
 
 1. Ist-Zustand und exakte Patchposition ermitteln.
 2. Nutzen, Risiko, Datenwirkung, Reichweite und Rückbaubarkeit klassifizieren.
-3. kleinsten vollständigen Patch planen.
-4. lokal und codesparsam ändern.
-5. risikobasiert prüfen.
+3. Kleinsten vollständigen Patch planen.
+4. Lokal und codesparsam ändern.
+5. Risikobasiert prüfen.
 6. Erfolg nur mit realem Nachweis ausweisen.
-7. nur betroffene Dokumentation/TODOs synchronisieren.
+7. Nur betroffene Dokumentation/TODOs synchronisieren.
 
 ## Ausführbarer Qualitätskern 2.1.1
 
@@ -43,43 +44,95 @@ Vorhanden:
 - `src/mastercore/infrastructure/paths.py` — Root-, Traversal-, Symlink-, Größen-, Suffix-, Rechte- und Freispeicherprüfung.
 - `src/mastercore/infrastructure/storage.py` — Stage → Hashprüfung → Rollback-Snapshot → atomarer Replace → Endprüfung.
 - `src/mastercore/infrastructure/logging.py` — begrenztes rotierendes Datei-Logging.
-- `tools/validate_mastercore.py` — Zero-Dependency Selfcheck für Governance-/Versionskonsistenz.
 - `tests/` — Unit-, Negativ-, Recovery- und Failure-Injection-Tests.
-- `.github/workflows/quality.yml` — automatische Compile-, Contract- und Testprüfung.
 
 ### Storage Hardening
 
-Schreibende Dateioperationen können jetzt zusätzlich:
+Schreibende Dateioperationen können unter anderem:
 
 - maximale Payload-Größe begrenzen,
 - erlaubte Dateiendungen einschränken,
 - freien Speicher vorab prüfen,
 - fehlende Schreibrechte früh erkennen,
-- JSON-Daten vor dem Schreiben durch einen Schema-/Shape-Validator prüfen,
+- JSON-Daten vor dem Schreiben validieren,
 - bestehende Dateien vor dem Replace intern als Rollback-Snapshot sichern,
-- optionale, SHA-256-verifizierte dauerhafte Backups erzeugen,
+- optionale SHA-256-verifizierte dauerhafte Backups erzeugen,
 - konkurrierende Änderungen am Ziel vor dem Replace erkennen,
 - auf POSIX den Zielordner per Directory-FD binden und `O_NOFOLLOW`/dir-fd-Operationen nutzen,
 - bei Fehlern nach dem Replace den vorherigen Zustand wiederherstellen.
 
 Die Failure-Injection-Tests provozieren unter anderem Schreibabbrüche, beschädigte Stage-/Finaldaten, fehlende Rechte, konkurrierende Zieländerungen, neu auftauchende Zieldateien und einen Parent-Verzeichnis-Swap.
 
-### Lokale Prüfung unter Linux/Kubuntu
+## Quality Gate Engine 2.2.0
+
+`tools/quality_engine.py` setzt die Qualitätsverträge als ausführbare G0–G8-Engine um. `tools/validate_mastercore.py` ist der kleine CLI-Einstieg.
+
+### Automatisierte Pflichtgates im normalen CI-Profil
+
+- **G0 Scope / Contract** — Pflichtstruktur und Qualitätsvertrag.
+- **G1 Static** — `compileall`, Ruff und striktes mypy.
+- **G2 Functional** — funktionale Start-/Use-Case-Tests.
+- **G3 Negative** — Pfad-, Rechte- und Failure-Injection-Negativfälle.
+- **G4 Data Integrity** — Storage-/Contract-Integrität.
+- **G5 Recovery** — Rollback- und Recovery-Szenarien.
+- **G7 Regression** — vollständige Test-Suite.
+
+**G6 UI/Accessibility** und **G8 Release** bleiben bewusst `NOT_RUN`, solange dafür keine echte automatisierte Acceptance- beziehungsweise Release-Harness existiert. Sie werden nicht als PASS ausgegeben.
+
+### Statische Qualität
+
+Die Quality-Toolchain ist reproduzierbar in `pyproject.toml` gepinnt:
+
+- Ruff `0.12.9`
+- mypy `1.17.1`
+- mypy `strict = true`
+
+Ruff prüft Produktcode, Tooling und Tests. Striktes mypy prüft `src/mastercore`.
+
+### Maschinenlesbare Evidence
+
+Jeder Gate-Lauf erzeugt `quality-evidence.json` mit:
+
+- Engine-/Schema-Version,
+- Gesamtstatus,
+- Pflichtgates,
+- jedem Gate und dessen Status,
+- ausgeführten Befehlen,
+- Returncodes,
+- Laufzeiten,
+- begrenzter stdout/stderr-Evidence.
+
+GitHub Actions lädt diese Datei auch bei einem fehlgeschlagenen Gate als Artefakt hoch. Ein erforderliches `NOT_RUN` oder `FAIL` blockiert den Workflow.
+
+### Lokale Qualitätsprüfung unter Linux/Kubuntu
 
 Im Repository-Ordner:
 
 ```bash
-PYTHONPATH=src python3 -m compileall -q src tools tests
-python3 tools/validate_mastercore.py
-PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_*.py' -v
+python3 -m venv .venv
+.venv/bin/python -m pip install -e ".[quality]"
+.venv/bin/python tools/validate_mastercore.py --profile ci --json quality-evidence.json
 ```
 
-Erwartet:
+Für einen schnellen lokalen Static-/Contract-Check:
+
+```bash
+.venv/bin/python tools/validate_mastercore.py --profile local --json quality-evidence.json
+```
+
+Erfolgskriterium für das CI-Profil:
 
 ```text
-PASS MASTERCORE contract 2.0.0
-...
-OK
+* G0 PASS
+* G1 PASS
+* G2 PASS
+* G3 PASS
+* G4 PASS
+* G5 PASS
+- G6 NOT_RUN
+* G7 PASS
+- G8 NOT_RUN
+OVERALL PASS
 ```
 
 ## Verbindliche Dokumente
@@ -90,7 +143,7 @@ OK
 - `docs/PATCH_AND_VALIDATION_PROTOCOL.md` — exakte Vor-Ort-Patches und Nachvalidierung.
 - `docs/DATA_STORAGE_CONTRACT.md` — Basistool-/Nutzerdatentrennung, Pfad- und Safe-IO-Vertrag.
 - `docs/UI_UX_ACCESSIBILITY_STANDARD.md` — Designsystem, responsive UI und Barrierefreiheit.
-- `docs/QUALITY_GATES.md` — risikobasierte Qualitätsgates.
+- `docs/QUALITY_GATES.md` — risikobasierte Qualitätsgates und deren ausführbare Zuordnung.
 - `docs/RELEASE_GOVERNANCE.md` — Versionierung, Releases und Rollback.
 - `quality-contract.json` — maschinenlesbare Kurzform zentraler Regeln.
 - `INPUT_FUER_TODO.md` — ausschließlich offene, nicht duplizierte nächste Schritte.
