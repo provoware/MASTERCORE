@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "standard_version": "2.0.0",
+  "status": "binding",
+  "workflow": [
+    "discover",
+    "classify",
+    "design",
+    "patch",
+    "verify",
+    "prove",
+    "record"
+  ],
+  "priorities": [
+    "data_integrity",
+    "recovery",
+    "maintainability",
+    "decoupling",
+    "usability_accessibility",
+    "performance",
+    "visual_polish"
+  ],
+  "validation_statuses": [
+    "PASS",
+    "WARN",
+    "FAIL",
+    "NOT_RUN"
+  ],
+  "action_policies": [
+    "reversible",
+    "compensatable",
+    "cancelable",
+    "backup_required",
+    "irreversible"
+  ],
+  "data_classes": [
+    "immutable_app_data",
+    "user_config",
+    "user_content",
+    "derived_data",
+    "operational_data",
+    "recovery_data"
+  ],
+  "quality_gates": [
+    "scope",
+    "static",
+    "functional",
+    "negative",
+    "data_integrity",
+    "recovery",
+    "ui_accessibility",
+    "regression",
+    "release"
+  ],
+  "ui_states": [
+    "default",
+    "hover",
+    "focus",
+    "active",
+    "disabled",
+    "loading",
+    "success",
+    "warning",
+    "error"
+  ],
+  "rules": {
+    "guess_patch_locations": false,
+    "report_unrun_checks_as_pass": false,
+    "mix_user_and_app_data": false,
+    "allow_silent_destructive_writes": false,
+    "prefer_minimal_complete_patch": true,
+    "require_pre_and_post_validation_for_writes": true,
+    "require_recovery_plan_for_high_risk_changes": true,
+    "require_design_tokens_for_ui": true,
+    "accessibility_target": "WCAG_2_2_AA"
+  }
+}
