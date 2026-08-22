@@ -1,6 +1,6 @@
-from pathlib import Path
 import json
 import unittest
+from pathlib import Path
 
 
 class ContractTests(unittest.TestCase):
