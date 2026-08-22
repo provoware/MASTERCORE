@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
-from pathlib import Path
 import sys
-from typing import Mapping
+from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
 
 from mastercore.domain.data_classes import DataClass
 from mastercore.domain.errors import ConfigurationError
@@ -78,7 +78,11 @@ def resolve_user_roots(
     current_platform = sys.platform if platform is None else platform
 
     if current_platform.startswith("win"):
-        roaming = _env_path(environment, "APPDATA", user_home / "AppData" / "Roaming")
+        roaming = _env_path(
+            environment,
+            "APPDATA",
+            user_home / "AppData" / "Roaming",
+        )
         local = _env_path(
             environment,
             "LOCALAPPDATA",
@@ -95,13 +99,21 @@ def resolve_user_roots(
         cache = user_home / "Library" / "Caches" / app_name
         logs = user_home / "Library" / "Logs" / app_name
     else:
-        config_home = _env_path(environment, "XDG_CONFIG_HOME", user_home / ".config")
+        config_home = _env_path(
+            environment,
+            "XDG_CONFIG_HOME",
+            user_home / ".config",
+        )
         data_home = _env_path(
             environment,
             "XDG_DATA_HOME",
             user_home / ".local" / "share",
         )
-        cache_home = _env_path(environment, "XDG_CACHE_HOME", user_home / ".cache")
+        cache_home = _env_path(
+            environment,
+            "XDG_CACHE_HOME",
+            user_home / ".cache",
+        )
         state_home = _env_path(
             environment,
             "XDG_STATE_HOME",
