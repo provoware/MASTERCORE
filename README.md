@@ -5,6 +5,7 @@ Globales Engineering-Fundament für wartbare, robuste, modulare, datenintegritä
 ## Aktueller Stand
 
 Standards-Version: **2.0.0**
+Executable Foundation: **2.1.0**
 
 MASTERCORE ist kein einzelnes Tool, sondern ein wiederverwendbares Architektur-, Qualitäts-, Daten-, UI- und Release-Fundament für zukünftige Multi-Modul-, Datenbank-, Medien-, Automations-, Desktop- und Web-Werkzeuge.
 
@@ -20,6 +21,37 @@ MASTERCORE ist kein einzelnes Tool, sondern ein wiederverwendbares Architektur-,
 6. Erfolg nur mit realem Nachweis ausweisen.
 7. nur betroffene Dokumentation/TODOs synchronisieren.
 
+## Ausführbarer Qualitätskern 2.1.0
+
+Neu vorhanden:
+
+- `src/mastercore/domain/errors.py` — zentrale typisierte Fehlerhierarchie.
+- `src/mastercore/domain/data_classes.py` — verbindliche Datenklassen.
+- `src/mastercore/infrastructure/paths.py` — Root-, Traversal-, Symlink- und Typprüfung.
+- `src/mastercore/infrastructure/storage.py` — temp → Hashprüfung → atomarer Replace → Endprüfung.
+- `src/mastercore/infrastructure/logging.py` — begrenztes rotierendes Datei-Logging.
+- `tools/validate_mastercore.py` — Zero-Dependency Selfcheck für Governance-/Versionskonsistenz.
+- `tests/` — Unit- und Negativtests.
+- `.github/workflows/quality.yml` — automatische Compile-, Contract- und Testprüfung.
+
+### Lokale Prüfung unter Linux/Kubuntu
+
+Im Repository-Ordner:
+
+```bash
+PYTHONPATH=src python3 -m compileall -q src tools tests
+python3 tools/validate_mastercore.py
+PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+Erwartet:
+
+```text
+PASS MASTERCORE contract 2.0.0
+...
+OK
+```
+
 ## Verbindliche Dokumente
 
 - `AGENTS.md` — zentrale Experten-Orchestrierung.
@@ -33,18 +65,18 @@ MASTERCORE ist kein einzelnes Tool, sondern ein wiederverwendbares Architektur-,
 - `quality-contract.json` — maschinenlesbare Kurzform zentraler Regeln.
 - `INPUT_FUER_TODO.md` — ausschließlich offene, nicht duplizierte nächste Schritte.
 
-## Architekturziel
+## Architektur
 
 ```text
-src/
-├── domain/          # Fachlogik, Invarianten, Modelle
+src/mastercore/
+├── domain/          # Fachlogik, Invarianten, Fehler- und Datenverträge
 ├── application/     # Use Cases, Workflows, Ports
 ├── infrastructure/  # Dateisystem, DB, Netzwerk, OS-Adapter
 ├── presentation/    # UI, Views, Controller/ViewModels
 └── composition/     # Start, Dependency Wiring, Konfiguration
 
 resources/           # unveränderliche ausgelieferte Ressourcen
-config/defaults/     # Standardkonfiguration
+config/defaults/     # unveränderliche Standardkonfiguration
 tests/               # automatisierte Prüfungen
 tools/               # Entwickler-/Validierungswerkzeuge
 ```
