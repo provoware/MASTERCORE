@@ -1,0 +1,2 @@
+# MASTERCORE selbst benötigt keine externen Laufzeitabhängigkeiten.
+# Projektabhängigkeiten werden isoliert aus der requirements.txt des gewählten Projekts installiert.
