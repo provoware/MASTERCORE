@@ -2,124 +2,117 @@
 
 Version: 2.0.0
 Status: verbindlich
-Executable Mapping: 2.2.0
+Executable Mapping: 2.2.2
 
 ## 1. Zweck
-Qualität wird nicht behauptet, sondern über reproduzierbare Gates nachgewiesen. Seit MASTERCORE 2.2.0 bildet `tools/quality_engine.py` diese Gates ausführbar ab und `tools/validate_mastercore.py` stellt den CLI-Einstieg bereit.
+Qualität wird nicht behauptet, sondern über reproduzierbare Gates nachgewiesen. `tools/quality_engine.py` bildet G0–G8 ausführbar ab; `tools/validate_mastercore.py` ist der CLI-Einstieg.
 
 ## 2. Gate-Stufen
-### G0 — Scope Gate
-- Ziel klar
-- betroffener Bereich identifiziert
-- keine ungeklärte Scope-Ausweitung
-- Repository-/Contract-Struktur konsistent
+### G0 — Scope / Contract
+- Pflichtstruktur vorhanden
+- Qualitätsvertrag konsistent
+- Quality-Engine-, Paket- und Runtime-Version synchron
+- Required-Check-Name stabil
 
-### G1 — Static Gate
-Im Python-Kern aktuell zwingend:
-- Syntax/Parser über `compileall`
-- Ruff für Lint, Imports, Bugbear-, Modernisierungs- und Simplify-Regeln
+### G1 — Static
+Im Python-Kern zwingend:
+- `compileall`
+- Ruff für Lint, Imports, Bugbear, Modernisierung und Simplify
 - mypy mit `strict = true`
 
-### G2 — Functional Gate
-- relevante Unit-Tests
-- gezielte Integrationsprüfung
-- Smoke-/Starttests
+### G2 — Functional
+- funktionale Unit-/Use-Case-Tests
+- Start-/Smoke-Prüfungen
 
-### G3 — Negative Gate
+### G3 — Negative
 - ungültige Eingaben
 - fehlende Dateien/Rechte
 - falsche Zustände
-- Abbruch/Timeout, wenn relevant
-- Failure-Injection, soweit vorhanden
+- Abbruch-/Failure-Injection-Fälle
 
-### G4 — Data Integrity Gate
-Für schreibende Datenänderungen:
+### G4 — Data Integrity
 - Vorvalidierung
 - Nachvalidierung
-- Transaktions-/Atomaritätsverhalten
-- Backupbedarf
-- Datenintegrität
+- Atomarität
+- Integritätsnachweis
+- Backup-/Datenvertrag
 
-### G5 — Recovery Gate
-Für riskante Änderungen:
+### G5 — Recovery
 - Rollback/Restore
-- Crash-/Abbruchszenario
-- Migration Recovery
+- Fehler nach Replace
+- Recovery-Szenarien
 
-### G6 — UI/Accessibility Gate
-Bei UI-Änderungen:
-- kleine/große Viewports
-- Fokus/Tastatur
-- lange Inhalte
-- Zoom/Schrift
-- Fehler/Loading/Empty
-- Kontrast/semantische Labels
+### G6 — UI / Accessibility
+Seit 2.2.2 automatisiert und im CI-Profil verpflichtend. Die Tk-Oberfläche wird unter Xvfb headless geprüft auf:
+- Initialfokus
+- Tastaturkürzel
+- explizit fokussierbare Primärbedienelemente
+- Small Viewport 640×440
+- Large Viewport 1440×900
+- große Standardschrift
+- sichtbare Hauptaktionen
+- Fehlerzustand und Rückkehr aus Busy-State
+- verständliche Lösung und technische Details
+- textuelle INFO/PASS/WARN/FAIL-Zustände, damit Status nicht nur über Farbe vermittelt wird
 
-Solange keine echte automatisierte UI-Acceptance-Harness vorhanden ist, bleibt G6 im normalen CI-Profil explizit `NOT_RUN` und ist nicht Teil der automatisierten Pflichtgates.
+G6 ist eine automatisierte Baseline-Acceptance-Harness. Sie ersetzt keine vollständige manuelle Screenreader-, Kontrast- oder plattformspezifische WCAG-Abnahme.
 
-### G7 — Regression Gate
-- angrenzende Funktionen
-- alte unterstützte Datenstände
-- Start/Shutdown
-- betroffene Workflows
+### G7 — Regression
 - vollständige automatisierte Testsuite
+- läuft im CI ebenfalls unter Xvfb, damit UI-Tests Bestandteil der Gesamtregression sind
 
-### G8 — Release Gate
-Vor Release:
-- Version konsistent
-- Changelog/README nur soweit betroffen
-- keine offenen kritischen FAILs
-- Artefakte reproduzierbar
-- Integritätsnachweis, sofern vorgesehen
-
-Solange die Release-/Packaging-Harness noch nicht existiert, bleibt G8 im normalen PR-Profil explizit `NOT_RUN`.
+### G8 — Release
+Noch `NOT_RUN` im normalen PR-Profil, bis eine reale Release-/Packaging-Harness existiert. Ziel:
+- Versionen
+- Build
+- Manifest
+- SHA-256
+- Reproduzierbarkeit
+- Release-Artefakte
 
 ## 3. Statussystem
-- `PASS` — Prüfung wurde tatsächlich ausgeführt und bestanden.
-- `WARN` — Prüfung wurde ausgeführt; eine dokumentierte Restgrenze bleibt.
-- `FAIL` — Prüfung fehlgeschlagen; ein erforderlicher FAIL blockiert die Freigabe.
-- `NOT_RUN` — Prüfung wurde nicht ausgeführt.
+- `PASS` — tatsächlich ausgeführt und bestanden
+- `WARN` — ausgeführt, aber dokumentierte Restgrenze
+- `FAIL` — nicht freigabefähig
+- `NOT_RUN` — nicht ausgeführt
 
-Ein Gate darf nur PASS sein, wenn es tatsächlich geprüft wurde. Ein erforderliches `NOT_RUN` wird von der Engine nicht als Erfolg behandelt.
+Ein erforderliches `NOT_RUN` ist kein Erfolg.
 
-## 4. CI-Pflichtprofil 2.2.0
+## 4. CI-Pflichtprofil 2.2.2
 Im normalen Pull-Request-/Main-Quality-Profil sind erforderlich:
 
-`G0 + G1 + G2 + G3 + G4 + G5 + G7`
+`G0 + G1 + G2 + G3 + G4 + G5 + G6 + G7`
 
-G6 und G8 bleiben sichtbar im Report, werden aber erst Pflicht, wenn dafür reale automatisierte Harnesses existieren.
+G8 bleibt sichtbar `NOT_RUN`, bis die Release-Harness real vorhanden ist.
 
-## 5. Maschinenlesbare Evidence
+## 5. Required Status Check
+Der stabile Checkname lautet:
+
+`MASTERCORE Quality`
+
+Er ist in `.github/workflows/quality.yml` als Jobname und in `quality-contract.json` als `quality_automation.required_status_check` hinterlegt. G0 prüft die Konsistenz.
+
+Die serverseitige GitHub-Branch-Protection muss diesen Check separat als Required Status Check für `main` aktivieren. Details: `docs/BRANCH_PROTECTION.md`.
+
+## 6. Maschinenlesbare Evidence
 Jeder Engine-Lauf erzeugt `quality-evidence.json` mit:
 - Evidence-Schema-Version
 - Engine-Version
 - Zeitpunkt
 - Profil
 - Gesamtstatus
+- Required-Check-Name
 - Liste der Pflichtgates
 - jedem G0–G8-Ergebnis
-- ausgeführten Befehlen
+- Befehlen
 - Returncodes
 - Laufzeiten
 - begrenzter stdout/stderr-Ausgabe
 
-GitHub Actions lädt die Evidence auch dann als Artefakt hoch, wenn ein Pflichtgate fehlschlägt. Dadurch bleibt der Fehlernachweis erhalten.
+GitHub Actions lädt die Evidence auch bei einem fehlgeschlagenen Pflichtgate als Artefakt hoch.
 
-## 6. Reproduzierbare Toolchain
-Die Python-Quality-Werkzeuge werden im `quality`-Extra von `pyproject.toml` versionsgenau gepinnt. CI installiert genau diese Gruppe, bevor die Engine startet.
-
-## 7. Risikobasierte Tiefe
-Niedriges Risiko benötigt nicht automatisch jedes Gate. Hohes Daten-/Migrations-/Recovery-Risiko benötigt mehr Gates. Das CI-Pflichtprofil ist die technische Untergrenze für normale Codeänderungen; spezielle Releases dürfen strengere Profile verlangen.
+## 7. Reproduzierbare Toolchain
+Ruff und mypy sind im `quality`-Extra von `pyproject.toml` versionsgenau gepinnt. Die CI installiert zusätzlich Xvfb/Xauth/Tk für reproduzierbare Headless-UI-Prüfungen.
 
 ## 8. Stop-Regel
-Kritischer FAIL stoppt Freigabe. WARN benötigt dokumentierte Begründung und klare Restgrenze. Fehlende Pflichtwerkzeuge ergeben `NOT_RUN` und damit im Pflichtprofil einen fehlgeschlagenen Gesamtstatus.
-
-## 9. Nachweisformat
-Für jedes relevante Gate dokumentieren:
-- Gate
-- Methode/Befehl/Test
-- Ergebnis
-- kurze Evidence
-- verbleibende Grenze
-
-Die JSON-Evidence ist der maschinenlesbare Primärnachweis; die Konsolenausgabe ist die kompakte Menschenansicht.
+Kritischer FAIL stoppt Freigabe. WARN benötigt eine dokumentierte Restgrenze. Fehlende Pflichtwerkzeuge führen zu `NOT_RUN` und damit zu einem fehlgeschlagenen Pflichtprofil.

@@ -6,15 +6,17 @@ import json
 import os
 import subprocess
 import sys
+import tomllib
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 from time import perf_counter
 
-ENGINE_VERSION = "2.2.0"
+ENGINE_VERSION = "2.2.2"
 OUTPUT_LIMIT = 20_000
-CI_REQUIRED_GATES = frozenset({"G0", "G1", "G2", "G3", "G4", "G5", "G7"})
+REQUIRED_STATUS_CHECK = "MASTERCORE Quality"
+CI_REQUIRED_GATES = frozenset({"G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7"})
 
 
 class GateStatus(StrEnum):
@@ -73,6 +75,7 @@ class QualityReport:
     required_gates: frozenset[str]
     gates: tuple[GateResult, ...]
     generated_at: str
+    required_status_check: str = REQUIRED_STATUS_CHECK
 
     def as_dict(self) -> dict[str, object]:
         return {
@@ -81,6 +84,7 @@ class QualityReport:
             "generated_at": self.generated_at,
             "profile": self.profile,
             "overall_status": self.overall_status.value,
+            "required_status_check": self.required_status_check,
             "required_gates": sorted(self.required_gates),
             "gates": [gate.as_dict() for gate in self.gates],
         }
@@ -159,13 +163,20 @@ def run_quality_gates(repo: Path, *, profile: str = "ci") -> QualityReport:
             environment,
             "test_storage_failures.py",
         ),
-        GateResult(
+        _xvfb_test_gate(
             "G6",
             "UI / Accessibility",
-            GateStatus.NOT_RUN,
-            "No automated UI acceptance harness configured yet.",
+            root,
+            environment,
+            "test_ui_acceptance.py",
         ),
-        _test_gate("G7", "Regression", root, environment, "test_*.py"),
+        _xvfb_test_gate(
+            "G7",
+            "Regression",
+            root,
+            environment,
+            "test_*.py",
+        ),
         GateResult(
             "G8",
             "Release",
@@ -173,11 +184,7 @@ def run_quality_gates(repo: Path, *, profile: str = "ci") -> QualityReport:
             "Release artifact validation is outside the normal PR profile.",
         ),
     )
-    required = (
-        CI_REQUIRED_GATES
-        if profile == "ci"
-        else frozenset({"G0", "G1"})
-    )
+    required = CI_REQUIRED_GATES if profile == "ci" else frozenset({"G0", "G1"})
     return QualityReport(
         profile=profile,
         overall_status=aggregate_status(gates, required),
@@ -232,8 +239,11 @@ def validate_repository_contract(repo: Path) -> list[str]:
         "docs/PATCH_AND_VALIDATION_PROTOCOL.md",
         "docs/UI_UX_ACCESSIBILITY_STANDARD.md",
         "docs/RELEASE_GOVERNANCE.md",
+        "docs/BRANCH_PROTECTION.md",
         "pyproject.toml",
         ".github/workflows/quality.yml",
+        "tests/test_ui_acceptance.py",
+        "src/mastercore/__init__.py",
     )
     for relative in required:
         if not (repo / relative).is_file():
@@ -256,6 +266,35 @@ def validate_repository_contract(repo: Path) -> list[str]:
         failures.append("validation_statuses are incomplete or inconsistent")
     if len(contract.get("quality_gates", [])) != 9:
         failures.append("quality_gates must contain G0-G8 concepts")
+
+    automation = contract.get("quality_automation")
+    if not isinstance(automation, dict):
+        failures.append("quality_automation contract is missing")
+    else:
+        if automation.get("engine_version") != ENGINE_VERSION:
+            failures.append("quality_automation engine_version is inconsistent")
+        if set(automation.get("ci_required_gates", [])) != set(CI_REQUIRED_GATES):
+            failures.append("quality_automation required gates are inconsistent")
+        if automation.get("required_status_check") != REQUIRED_STATUS_CHECK:
+            failures.append("required status check name is inconsistent")
+
+    try:
+        pyproject = tomllib.loads((repo / "pyproject.toml").read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        failures.append(f"pyproject unreadable: {exc}")
+        return failures
+    project = pyproject.get("project")
+    if not isinstance(project, dict) or project.get("version") != ENGINE_VERSION:
+        failures.append("pyproject project.version differs from quality engine version")
+
+    runtime_marker = f'__version__ = "{ENGINE_VERSION}"'
+    try:
+        runtime_text = (repo / "src/mastercore/__init__.py").read_text(encoding="utf-8")
+    except OSError as exc:
+        failures.append(f"runtime version unreadable: {exc}")
+    else:
+        if runtime_marker not in runtime_text:
+            failures.append("mastercore.__version__ differs from quality engine version")
     return failures
 
 
@@ -266,7 +305,23 @@ def _test_gate(
     environment: dict[str, str],
     pattern: str,
 ) -> GateResult:
-    command = (
+    command = _unittest_command(pattern)
+    return _command_gate(gate, name, repo, environment, (command,))
+
+
+def _xvfb_test_gate(
+    gate: str,
+    name: str,
+    repo: Path,
+    environment: dict[str, str],
+    pattern: str,
+) -> GateResult:
+    command = ("xvfb-run", "-a", *_unittest_command(pattern))
+    return _command_gate(gate, name, repo, environment, (command,))
+
+
+def _unittest_command(pattern: str) -> tuple[str, ...]:
+    return (
         sys.executable,
         "-m",
         "unittest",
@@ -277,7 +332,6 @@ def _test_gate(
         pattern,
         "-v",
     )
-    return _command_gate(gate, name, repo, environment, (command,))
 
 
 def _multi_test_gate(
@@ -287,20 +341,7 @@ def _multi_test_gate(
     environment: dict[str, str],
     patterns: tuple[str, ...],
 ) -> GateResult:
-    commands = tuple(
-        (
-            sys.executable,
-            "-m",
-            "unittest",
-            "discover",
-            "-s",
-            "tests",
-            "-p",
-            pattern,
-            "-v",
-        )
-        for pattern in patterns
-    )
+    commands = tuple(_unittest_command(pattern) for pattern in patterns)
     return _command_gate(gate, name, repo, environment, commands)
 
 
@@ -311,10 +352,7 @@ def _command_gate(
     environment: dict[str, str],
     commands: tuple[tuple[str, ...], ...],
 ) -> GateResult:
-    evidence = tuple(
-        _run_command(command, repo, environment)
-        for command in commands
-    )
+    evidence = tuple(_run_command(command, repo, environment) for command in commands)
     if any(item.return_code is None for item in evidence):
         return GateResult(
             gate,

@@ -52,6 +52,20 @@
     "regression",
     "release"
   ],
+  "quality_automation": {
+    "engine_version": "2.2.2",
+    "ci_required_gates": [
+      "G0",
+      "G1",
+      "G2",
+      "G3",
+      "G4",
+      "G5",
+      "G6",
+      "G7"
+    ],
+    "required_status_check": "MASTERCORE Quality"
+  },
   "ui_states": [
     "default",
     "hover",
